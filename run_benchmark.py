@@ -30,7 +30,13 @@ def main(
     examples = load_dataset(dataset)
     
     runtime = None
-    extensions = ["benchmark_report_json", "reflection_memory", "adaptive_max_attempts", "memory_compression"]
+    extensions = [
+        "benchmark_report_json",
+        "reflection_memory",
+        "adaptive_max_attempts",
+        "memory_compression",
+        "reflection_overfit_guard",
+    ]
     if mode == "real":
         api_key = os.getenv("OPENAI_API_KEY", "")
         model = os.getenv("LLM_MODEL", "gpt-4o-mini")
@@ -45,7 +51,14 @@ def main(
             )
 
         runtime = OpenAICompatibleRuntime(model=model, api_key=api_key, base_url=base_url)
-        extensions.append("structured_evaluator")
+        extensions.extend(
+            [
+                "structured_evaluator",
+                "plan_then_execute",
+                "mini_lats_branching",
+                "self_consistency_vote",
+            ]
+        )
     elif mode == "mock":
         extensions.append("mock_mode_for_autograding")
     else:

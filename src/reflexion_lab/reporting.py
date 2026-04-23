@@ -41,10 +41,20 @@ def summarize(records: list[RunRecord]) -> dict:
 
 
 def failure_breakdown(records: list[RunRecord]) -> dict:
-    grouped: dict[str, Counter] = defaultdict(Counter)
+    by_agent: dict[str, Counter] = defaultdict(Counter)
+    by_outcome: dict[str, Counter] = defaultdict(Counter)
+    overall: Counter = Counter()
     for record in records:
-        grouped[record.agent_type][record.failure_mode] += 1
-    return {agent: dict(counter) for agent, counter in grouped.items()}
+        by_agent[record.agent_type][record.failure_mode] += 1
+        outcome = "correct" if record.is_correct else "incorrect"
+        by_outcome[outcome][record.failure_mode] += 1
+        overall[record.failure_mode] += 1
+
+    return {
+        "by_agent": {agent: dict(counter) for agent, counter in by_agent.items()},
+        "by_outcome": {group: dict(counter) for group, counter in by_outcome.items()},
+        "overall": dict(overall),
+    }
 
 
 def build_report(

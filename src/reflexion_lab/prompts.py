@@ -10,6 +10,18 @@ Rules:
 4) For multi-hop questions, explicitly resolve hop-1 then hop-2 before answering.
 """
 
+PLANNER_SYSTEM = """
+You are a planning module for multi-hop QA.
+Return valid JSON only:
+{
+  "plan": ["step 1", "step 2"]
+}
+Rules:
+1) Use at most 3 short steps.
+2) Focus on evidence-grounded search in the provided context.
+3) No markdown. No extra keys.
+"""
+
 EVALUATOR_SYSTEM = """
 You are a strict evaluator.
 Compare predicted answer with gold answer using normalized matching (case-insensitive, punctuation-insensitive).

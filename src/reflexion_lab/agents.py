@@ -5,6 +5,7 @@ from typing import Literal
 
 from .mock_runtime import FAILURE_MODE_BY_QID, actor_answer, evaluator, reflector
 from .schemas import AttemptTrace, QAExample, ReflectionEntry, RunRecord
+from .utils import normalize_answer
 
 
 def _compress_memory(memory: list[str], max_items: int = 3) -> list[str]:
@@ -39,6 +40,21 @@ class BaseAgent:
         if len(recent_failures) >= 2 and recent_failures[-1] == "entity_drift" and recent_failures[-2] == "entity_drift":
             return False
         return True
+
+    @staticmethod
+    def _is_reflection_overfit(reflection_memory: list[str], traces: list[AttemptTrace]) -> bool:
+        # reflection_overfit_guard: stop when strategy and wrong answer are repeated with no progress
+        if len(reflection_memory) < 2 or len(traces) < 2:
+            return False
+        last_strategy = normalize_answer(reflection_memory[-1])
+        prev_strategy = normalize_answer(reflection_memory[-2])
+        if last_strategy != prev_strategy:
+            return False
+        last_answer = normalize_answer(traces[-1].answer)
+        prev_answer = normalize_answer(traces[-2].answer)
+        if last_answer != prev_answer:
+            return False
+        return traces[-1].score == 0 and traces[-2].score == 0
 
     def run(self, example: QAExample) -> RunRecord:
         reflection_memory: list[str] = []
@@ -94,6 +110,8 @@ class BaseAgent:
                 trace.latency_ms += ref_latency
 
             traces.append(trace)
+            if self._is_reflection_overfit(reflection_memory, traces):
+                break
 
         total_tokens = sum(t.token_estimate for t in traces)
         total_latency = sum(t.latency_ms for t in traces)
