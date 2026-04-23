@@ -29,7 +29,16 @@ def main(
     output_path: str = "data/hotpot_100.json",
     num_samples: int = 120,
     seed: int = 42,
+    level: str | None = typer.Option(
+        None,
+        help="Optional difficulty filter: easy|medium|hard",
+    ),
 ) -> None:
+    valid_levels = {"easy", "medium", "hard"}
+    level_filter = level.lower().strip() if level is not None else None
+    if level_filter is not None and level_filter not in valid_levels:
+        raise typer.BadParameter("level must be one of: easy, medium, hard")
+
     raw = json.loads(Path(input_path).read_text(encoding="utf-8"))
 
     rng = random.Random(seed)
@@ -42,8 +51,10 @@ def main(
         answer = item.get("answer")
         context = _to_context(item.get("context", []))
         level = str(item.get("level", "medium")).lower()
-        if level not in {"easy", "medium", "hard"}:
+        if level not in valid_levels:
             level = "medium"
+        if level_filter is not None and level != level_filter:
+            continue
 
         if not qid or not question or answer is None or not context:
             continue

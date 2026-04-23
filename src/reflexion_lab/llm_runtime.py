@@ -21,7 +21,12 @@ class RuntimeOutput:
 class OpenAICompatibleRuntime:
     def __init__(self, model: str, api_key: str, base_url: str | None = None, timeout: float = 60.0) -> None:
         self.model = model
-        self.client = OpenAI(api_key=api_key, base_url=base_url, timeout=timeout)
+        normalized_base_url = (base_url or "").strip() or None
+        if normalized_base_url and not normalized_base_url.startswith(("http://", "https://")):
+            raise ValueError(
+                "base_url must include scheme, for example: https://api.openai.com/v1"
+            )
+        self.client = OpenAI(api_key=api_key, base_url=normalized_base_url, timeout=timeout)
 
     def _chat(self, system_prompt: str, user_prompt: str, json_mode: bool = False) -> RuntimeOutput:
         started = time.perf_counter()

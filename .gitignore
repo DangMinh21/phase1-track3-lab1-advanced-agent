@@ -9,3 +9,6 @@ env/
 .pytest_cache/
 outputs/
 .DS_Store
+
+# data 
+data/raw/hotpot_dev_fullwiki_v1.json

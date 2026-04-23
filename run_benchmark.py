@@ -34,10 +34,15 @@ def main(
     if mode == "real":
         api_key = os.getenv("OPENAI_API_KEY", "")
         model = os.getenv("LLM_MODEL", "gpt-4o-mini")
-        base_url = os.getenv("LLM_BASE_URL")
+        base_url_raw = (os.getenv("LLM_BASE_URL", "") or "").strip()
+        base_url = base_url_raw or None
 
         if not api_key:
             raise typer.BadParameter("OPENAI_API_KEY is required for --mode real")
+        if base_url and not base_url.startswith(("http://", "https://")):
+            raise typer.BadParameter(
+                "LLM_BASE_URL must include scheme, e.g. https://api.openai.com/v1"
+            )
 
         runtime = OpenAICompatibleRuntime(model=model, api_key=api_key, base_url=base_url)
         extensions.append("structured_evaluator")
